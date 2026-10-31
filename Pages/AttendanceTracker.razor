@@ -1,0 +1,51 @@
+@page "/attendance"
+@using EventEase.Services
+@inject EventService EventService
+@inject AttendanceService Attendance
+@inject UserSessionService Session
+
+<h1>Attendance Tracker</h1>
+
+@if (!Session.IsLoggedIn)
+{
+    <p>Please log in first.</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr><th>Event</th><th>Your Attendance</th><th>Total Attendees</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var ev in EventService.GetEvents())
+            {
+                var attending = Session.UserEmail != null && Attendance.IsAttending(ev.Id, Session.UserEmail);
+                <tr>
+                    <td>@ev.Name</td>
+                    <td>
+                        <button @onclick="() => Mark(ev.Id)" disabled="@attending">
+                            @(attending ? "✓ Attending" : "Mark Attendance")
+                        </button>
+                    </td>
+                    <td>@Attendance.GetAttendanceCount(ev.Id)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private void Mark(int eventId)
+    {
+        if (Session.UserEmail != null)
+            Attendance.MarkAttendance(eventId, Session.UserEmail);
+    }
+}
+
+<style>
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.75rem; border: 1px solid #ddd; text-align: left; }
+    th { background: #4a6fa5; color: white; }
+    button { padding: 0.4rem 0.8rem; background: #4a6fa5; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:disabled { background: #2c7a2c; cursor: default; }
+</style>

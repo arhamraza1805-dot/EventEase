@@ -1,0 +1,83 @@
+@using EventEase.Models
+
+<div class="event-card">
+    <div class="event-header">
+        <h3>@Event.Name</h3>
+        <span class="event-date">@Event.Date.ToString("MMM dd, yyyy")</span>
+    </div>
+    <p class="event-location">📍 @Event.Location</p>
+    <p class="event-description">@Event.Description</p>
+
+    <div class="event-stats">
+        <span>@Event.RegisteredCount / @Event.Capacity registered</span>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: @ProgressPercent%"></div>
+        </div>
+    </div>
+
+    <div class="event-actions">
+        <input type="text" @bind="AttendeeName" @bind:event="oninput" placeholder="Your name" />
+        <input type="email" @bind="AttendeeEmail" placeholder="Your email" />
+        <button @onclick="HandleRegister" disabled="@IsFull">
+            @(IsFull ? "Event Full" : "Register")
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(StatusMessage))
+    {
+        <p class="status-message">@StatusMessage</p>
+    }
+</div>
+
+@code {
+    [Parameter] public EventModel Event { get; set; } = new();
+    [Parameter] public EventCallback<EventModel> OnRegistered { get; set; }
+
+    private string AttendeeName { get; set; } = string.Empty;
+    private string AttendeeEmail { get; set; } = string.Empty;
+    private string StatusMessage { get; set; } = string.Empty;
+
+    private bool IsFull => Event.RegisteredCount >= Event.Capacity;
+    private int ProgressPercent => Event.Capacity == 0 ? 0 : (Event.RegisteredCount * 100) / Event.Capacity;
+
+    private async Task HandleRegister()
+    {
+        if (string.IsNullOrWhiteSpace(AttendeeName) || string.IsNullOrWhiteSpace(AttendeeEmail))
+        {
+            StatusMessage = "Please enter both name and email.";
+            return;
+        }
+
+        if (!AttendeeEmail.Contains("@") || !AttendeeEmail.Contains("."))
+        {
+            StatusMessage = "Please enter a valid email.";
+            return;
+        }
+
+        if (IsFull)
+        {
+            StatusMessage = "This event is at full capacity.";
+            return;
+        }
+
+        Event.RegisteredCount++;
+        StatusMessage = $"Thanks, {AttendeeName}! You're registered.";
+        AttendeeName = string.Empty;
+        AttendeeEmail = string.Empty;
+        await OnRegistered.InvokeAsync(Event);
+    }
+}
+
+<style>
+    .event-card { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+    .event-header { display: flex; justify-content: space-between; align-items: center; }
+    .event-date { color: #4a6fa5; font-weight: bold; }
+    .event-stats { margin: 1rem 0; }
+    .progress-bar { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-top: 0.5rem; }
+    .progress-fill { height: 100%; background: #4a6fa5; transition: width 0.3s; }
+    .event-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .event-actions input { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; flex: 1; min-width: 150px; }
+    .event-actions button { padding: 0.5rem 1rem; background: #4a6fa5; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .event-actions button:disabled { background: #999; cursor: not-allowed; }
+    .status-message { margin-top: 0.75rem; color: #2c7a2c; font-weight: bold; }
+</style>

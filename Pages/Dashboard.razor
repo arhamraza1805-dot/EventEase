@@ -1,0 +1,25 @@
+@page "/dashboard"
+@using EventEase.Services
+@inject EventService EventService
+@inject UserSessionService Session
+
+<h1>Event Dashboard</h1>
+
+@if (Session.IsLoggedIn)
+{
+    <p>Welcome, <strong>@Session.UserName</strong>! <button @onclick="Logout">Logout</button></p>
+
+    @foreach (var ev in EventService.GetEvents())
+    {
+        <EventCard Event="ev" OnRegistered="OnRegistered" />
+    }
+}
+else
+{
+    <p>Please <a href="/login">log in</a> to view events.</p>
+}
+
+@code {
+    private void Logout() => Session.Logout();
+    private void OnRegistered(EventEase.Models.EventModel ev) { }
+}

@@ -1,0 +1,67 @@
+@page "/registration"
+@using EventEase.Models
+@using EventEase.Services
+@inject EventService EventService
+@inject UserSessionService Session
+
+<h1>Event Registration</h1>
+
+@if (!Session.IsLoggedIn)
+{
+    <p>Please log in first.</p>
+}
+else
+{
+    <EditForm Model="registration" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label>Name:</label>
+            <InputText @bind-Value="registration.Name" />
+        </div>
+
+        <div class="form-group">
+            <label>Email:</label>
+            <InputText @bind-Value="registration.Email" />
+        </div>
+
+        <div class="form-group">
+            <label>Event:</label>
+            <InputSelect @bind-Value="registration.EventId">
+                <option value="0">-- Select an event --</option>
+                @foreach (var ev in EventService.GetEvents())
+                {
+                    <option value="@ev.Id">@ev.Name</option>
+                }
+            </InputSelect>
+        </div>
+
+        <button type="submit">Register</button>
+    </EditForm>
+
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <p class="message">@Message</p>
+    }
+}
+
+@code {
+    private Registration registration = new();
+    private string Message { get; set; } = string.Empty;
+
+    private void HandleValidSubmit()
+    {
+        EventService.Register(registration.EventId);
+        Message = $"Successfully registered for event #{registration.EventId}!";
+        registration = new();
+    }
+}
+
+<style>
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.25rem; font-weight: bold; }
+    .form-group input, .form-group select { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+    button { padding: 0.75rem 1.5rem; background: #4a6fa5; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .message { margin-top: 1rem; color: #2c7a2c; font-weight: bold; }
+</style>
